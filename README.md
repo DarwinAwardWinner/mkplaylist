@@ -11,7 +11,9 @@ First, for each playlist you want to create, add a 'playlist' tag to
 each of the files in that playlist with a value of that playlist's
 name. If you want to put the same file in multiple playlists, simply
 add multiple 'playlist' tags. Any tag editor worth its salt should
-allow you to do this.
+allow you to do this. A good example is [Ex Falso](1)
+
+[1] http://code.google.com/p/quodlibet/
 
     mkplaylist.py MUSIC_DIR [PLAYLIST_DIR]
 
