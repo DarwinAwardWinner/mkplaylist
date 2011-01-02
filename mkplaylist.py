@@ -34,20 +34,6 @@ class PLTrack(object):
         else:
             return tuple()
 
-    # def set_playlists(self, *playlists):
-    #     """Add the track to each of the specified playlists, and remove it from all others."""
-    #     self[pltag] = "\n".join(maybe_tuple(playlists))
-
-    # def add_playlist(self, *playlists):
-    #     """Add the track to of the specified playlist(s)."""
-    #     for pl in maybe_tuple(playlists):
-    #         self.add(pltag, pl)
-
-    # def remove_playlist(self, *playlists):
-    #     """Remove the track from each the specified playlist(s), if it is currently in them."""
-    #     for pl in maybe_tuple(playlists):
-    #         self.remove(pltag, pl)
-
 def ensure_extension(path, ext):
     """Ensure that path ends with ext by appending ext if necessary."""
     if path.endswith(ext):
@@ -83,17 +69,6 @@ def write_playlists(playlists, destdir):
 def remove_hidden_paths(paths):
     '''Remove UNIX-style hidden paths from a list.'''
     return [ p for p in paths if not re.search('^\.',p) ]
-
-# def unique(items, key_fun = None):
-#     '''Return a list of unique items, where two items are considered
-#     identical if key_fun returns the same value for both of them.
-
-#     If no key_fun is provided, then the identity function is assumed,
-#     in which case this is equivalent to list(set(items)).'''
-#     if key_fun is None:
-#         return list(set(items))
-#     else:
-#         return (dict( (key_fun(i), i) for i in items ).values())
 
 def find_all_music_files(paths, ignore_hidden=True):
     '''Recursively search in one or more paths for music files.
