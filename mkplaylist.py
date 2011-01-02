@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import os
+import re
+from itertools import imap
 import quodlibet.config
 quodlibet.config.init()
 from quodlibet.formats import MusicFile
@@ -72,10 +74,10 @@ def collect_playlists(music_files, pltag=None):
 
 def write_playlists(playlists, destdir):
     for pl, tracks in playlists.iteritems():
-        paths = ( t['~filename'] for t in tracks )
-        pl_filename = os.path.join(destdir, ensure_extension(pl, ext))
+        paths = ( t.track['~filename'] for t in tracks )
+        pl_filename = os.path.join(destdir, ensure_extension(pl, ".m3u"))
         pl_file = open(pl_filename, 'w')
-        pl_file.writelines(append_newlines(paths))
+        pl_file.writelines(append_newlines(sorted(paths)))
         pl_file.close()
 
 def remove_hidden_paths(paths):
@@ -93,43 +95,50 @@ def remove_hidden_paths(paths):
 #     else:
 #         return (dict( (key_fun(i), i) for i in items ).values())
 
-def find_all_music_files(paths, ignore_hidden=True, return_paths=False):
+def find_all_music_files(paths, ignore_hidden=True):
     '''Recursively search in one or more paths for music files.
 
     Returns an iterator. By default, hidden files and directories are
     ignored.'''
-    if return_paths:
-        return ( f['~filename'] for f in find_all_music_files(paths, ignore_hidden, return_paths=False) )
-    else:
-        for p in paths:
-            if os.path.isdir(p):
-                for root, dirs, files in os.walk(p, followlinks=True):
-                    if ignore_hidden:
-                        files = remove_hidden_paths(files)
-                        dirs = remove_hidden_paths(dirs)
-                    # Try to load every file as an audio file, and
-                    # filter the ones that fail to load.
-                    for f in ( MusicFile(os.path.join(root, x)) for x in files ):
-                        if f is not None:
-                            yield f
-            else:
-                f = MusicFile(p)
-                if f is not None:
-                    yield f
+    for p in paths:
+        if os.path.isdir(p):
+            for root, dirs, files in os.walk(p, followlinks=True):
+                if ignore_hidden:
+                    files = remove_hidden_paths(files)
+                    dirs = remove_hidden_paths(dirs)
+                # Try to load every file as an audio file, and
+                # filter the ones that fail to load.
+                for f in ( MusicFile(os.path.join(root, x)) for x in files ):
+                    if f is not None:
+                        yield f
+        else:
+            f = MusicFile(p)
+            if f is not None:
+                yield f
 
 if __name__ == '__main__':
     import plac
+    def directory(path):
+        """Return path only if it represents a path to a directory"""
+        if os.path.isdir(path):
+            return path
+        else:
+            raise TypeError("path is not a directory")
     @plac.annotations(
         # arg=(helptext, kind, abbrev, type, choices, metavar)
-        musicdir=("The directory where music files are stored.", "positional"),
+        musicdir=("The directory where music files are stored.", "positional", None, directory),
         pldir=("The directory where playlist files are stored. The default is the same as the music directory.", "positional"),
-        pltag=("The name of the tag from which to read playlists.", "option", "t", "str", None, "TAGNAME"),
-        include_hidden=("Whether to ignore hidden files and directories.", "flag", "i"),
+        pltag=("The name of the tag from which to read playlists.", "option", "t", str),
+        include_hidden=("Include hidden files and directories (excluded by default).", "flag", "i"),
         )
-    def main(musicdir, pldir=None, pltag='playlist', include_hidden=True):
+    def main(musicdir, pldir=None, pltag='playlist', include_hidden=False):
         if pldir is None:
             pldir = musicdir
-        music_files = find_all_music_files(musicdir, !include_hidden)
+        print "Reading music files..."
+        music_files = find_all_music_files(musicdir, not include_hidden)
+        print "Collecting playlists..."
         playlists = collect_playlists(music_files, pltag)
+        print "Writing playlists..."
         write_playlists(playlists, pldir)
+        print "Done."
     plac.call(main)
