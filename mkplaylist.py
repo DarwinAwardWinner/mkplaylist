@@ -58,9 +58,12 @@ def collect_playlists(music_files, pltag=None):
                 playlists[pl] = set((t,))
     return playlists
 
-def write_playlists(playlists, destdir):
+def write_playlists(playlists, destdir, relative_to):
     for pl, tracks in playlists.iteritems():
-        paths = ( t.track['~filename'] for t in tracks )
+        if relative_to:
+            paths = ( os.path.relpath(t.track['~filename'], start=relative_to) for t in tracks )
+        else:
+            paths = ( t.track['~filename'] for t in tracks )
         pl_filename = os.path.join(destdir, ensure_extension(pl, ".m3u"))
         pl_file = open(pl_filename, 'w')
         pl_file.writelines(append_newlines(sorted(paths)))
@@ -105,15 +108,20 @@ if __name__ == '__main__':
         pldir=("The directory where playlist files are stored. The default is the same as the music directory.", "positional"),
         pltag=("The name of the tag from which to read playlists.", "option", "t", str),
         include_hidden=("Include hidden files and directories (excluded by default).", "flag", "i"),
+        relative_paths=("Put relative paths to music files in playlists.", "flag", "p"),
+        relative_to=("Starting path from which to compute relative paths. Implies --relative_paths. Default is pldir.", "option", "r"),
         )
-    def main(musicdir, pldir=None, pltag='playlist', include_hidden=False):
+    def main(musicdir, pldir=None, pltag='playlist', include_hidden=False, relative_paths=False, relative_to=None):
         if pldir is None:
             pldir = musicdir
         print "Reading music files..."
-        music_files = find_all_music_files(musicdir, not include_hidden)
+        music_files = find_all_music_files((musicdir, ), not include_hidden)
         print "Collecting playlists..."
         playlists = collect_playlists(music_files, pltag)
         print "Writing playlists..."
-        write_playlists(playlists, pldir)
+        if relative_paths is not None:
+            relative_to = relative_to or pldir
+
+        write_playlists(playlists, pldir, relative_to)
         print "Done."
     plac.call(main)
