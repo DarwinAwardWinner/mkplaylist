@@ -112,6 +112,7 @@ if __name__ == '__main__':
         relative_to=("Starting path from which to compute relative paths. Implies --relative_paths. Default is pldir.", "option", "r"),
         )
     def main(musicdir, pldir=None, pltag='playlist', include_hidden=False, relative_paths=False, relative_to=None):
+        """Generate playlist files from tags in your music files."""
         if pldir is None:
             pldir = musicdir
         print "Reading music files..."
@@ -121,7 +122,6 @@ if __name__ == '__main__':
         print "Writing playlists..."
         if relative_paths is not None:
             relative_to = relative_to or pldir
-
         write_playlists(playlists, pldir, relative_to)
         print "Done."
     plac.call(main)
